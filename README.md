@@ -1,2 +1,7 @@
-# VoltCache
-VoltCache is a lightweight, multithreaded in-memory key-value store built entirely in C++. Inspired by the core architecture of distributed caches like Redis, this project is designed to handle extremely low-latency data access by bypassing disk I/O bottlenecks. By managing raw POSIX sockets and implementing custom thread pools, VoltCache ensures high-throughput concurrent client connections. The architecture is intentionally kept minimal and zero-dependency, making it highly optimized for containerized deployments and rigorous performance profiling—including measuring throughput, latency, and hardware-level energy consumption under heavy concurrent loads.
+# ⚡ VoltCache
+
+> **🚧 Active Development:** Building a high-performance in-memory caching engine from the ground up.
+
+VoltCache is a lightweight, multithreaded in-memory key-value store built entirely in C++. Inspired by the core architecture of distributed caches like Redis, this project is designed to handle extremely low-latency data access by bypassing disk I/O bottlenecks. 
+
+By managing raw POSIX sockets and implementing custom thread pools, VoltCache ensures high-throughput concurrent client connections. The architecture is intentionally kept minimal and zero-dependency, making it highly optimized for containerized deployments and rigorous performance profiling—including measuring throughput, latency, and hardware-level energy consumption under heavy concurrent loads.
