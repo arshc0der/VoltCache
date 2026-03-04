@@ -1,103 +1,208 @@
 
+---
+
 # ⚡ VoltCache
 
-<p align="left"> <img src="https://img.shields.io/badge/status-Stable-brightgreen.svg" /> <img src="https://img.shields.io/github/license/arshc0der/VoltCache?color=green" /> <img src="https://img.shields.io/github/stars/arshc0der/VoltCache?style=social" /> <img src="https://img.shields.io/github/forks/arshc0der/VoltCache?style=social" /> <img src="https://img.shields.io/github/issues/arshc0der/VoltCache" /> <img src="https://img.shields.io/github/last-commit/arshc0der/VoltCache" /> <img src="https://img.shields.io/badge/language-C%2B%2B17-00599C?logo=c%2B%2B&logoColor=white" /> <img src="https://img.shields.io/badge/build-CMake-064F8C?logo=cmake&logoColor=white" /> <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey" /> <img src="https://img.shields.io/badge/threading-std::shared__mutex-blue" /> <img src="https://img.shields.io/badge/persistence-Write--Ahead%20Logging-orange" /> <img src="https://img.shields.io/badge/testing-Python%20Integration%20Suite-yellow" /> <img src="https://img.shields.io/badge/dependencies-Zero-success" /> </p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/arshc0der/VoltCache/refs/heads/main/Testing/preview/logo.png" width="100%" alt="VoltCache"/>
+### High-Performance In-Memory Key-Value Engine (C++17)
+<p align="center"> <img src="https://raw.githubusercontent.com/arshc0der/VoltCache/refs/heads/main/Testing/preview/logo.png" width="100%" alt="VoltCache"/> </p>
+<p align="left">
+  <img src="https://img.shields.io/badge/status-Stable-brightgreen.svg" />
+  <img src="https://img.shields.io/github/license/arshc0der/VoltCache?color=green" />
+  <img src="https://img.shields.io/github/stars/arshc0der/VoltCache?style=social" />
+  <img src="https://img.shields.io/github/forks/arshc0der/VoltCache?style=social" />
+  <img src="https://img.shields.io/github/issues/arshc0der/VoltCache" />
+  <img src="https://img.shields.io/github/last-commit/arshc0der/VoltCache" />
+  <img src="https://img.shields.io/badge/language-C%2B%2B17-00599C?logo=c%2B%2B&logoColor=white" />
+  <img src="https://img.shields.io/badge/build-CMake-064F8C?logo=cmake&logoColor=white" />
+  <img src="https://img.shields.io/badge/architecture-Multithreaded-critical" />
+  <img src="https://img.shields.io/badge/concurrency-Reader--Writer%20Lock-blueviolet" />
+  <img src="https://img.shields.io/badge/persistence-Write--Ahead%20Logging-orange" />
+  <img src="https://img.shields.io/badge/dependencies-Zero-success" />
 </p>
 
-> **Status:** High-performance in-memory engine with completed Durability (WAL) and Thread-Safe Concurrency layers.
+---
 
-VoltCache is a lightweight, multithreaded in-memory key-value store built with **C++17**. It is designed to handle low-latency data access while ensuring data integrity through a Write-Ahead Logging system. By utilizing modern C++ synchronization primitives, VoltCache supports high-throughput concurrent client connections.
+## 🚀 Overview
+
+**VoltCache** is a lightweight, high-performance, multithreaded in-memory key-value store built in **C++17**.
+
+It is engineered to deliver:
+
+* ⚡ Ultra-low latency reads
+* 🔒 Thread-safe concurrent access
+* 💾 Durable persistence via Write-Ahead Logging (WAL)
+* 🧵 Modern C++ synchronization using RAII
+
+Designed to simulate production-grade caching systems like Redis — but implemented from scratch to demonstrate deep systems-level understanding.
 
 ---
 
-### 🚀 Core Features (Implemented)
+## ✨ Key Features
 
-* **Thread-Safe Engine:** Implements a **Reader-Writer Lock pattern** using `std::shared_mutex`. This allows unlimited concurrent reads while ensuring exclusive access for writes, maximizing throughput.
-* **Durability (Write-Ahead Logging):** Every `SET` operation is flushed to `data/volt.log` before memory update. On system restart, the engine automatically replays the log to restore the state.
-* **Structured Data Support:** Advanced tokenization allows for storing complex strings and **JSON** objects (handling spaces and delimiters correctly).
-* **Zero-Dependency Build:** Managed entirely via **CMake**, ensuring the project is portable and easy to compile in any C++ environment.
+### 🧵 Thread-Safe Concurrency
+
+* Implements **Reader-Writer Lock pattern**
+* Uses `std::shared_mutex`
+* Unlimited concurrent reads
+* Exclusive writes via `std::unique_lock`
+* RAII-based lock safety
+
+### 💾 Durability with Write-Ahead Logging
+
+* Every `SET` operation is logged before memory mutation
+* Log file: `data/volt.log`
+* Crash recovery via automatic WAL replay
+* Prevents recursive re-logging during restore
+
+### 📦 Structured Data Support
+
+* Advanced token parsing
+* Stores:
+
+  * Strings with spaces
+  * Delimiter-safe values
+  * JSON payloads
+
+### ⚙️ Zero Dependency Build
+
+* Fully managed via **CMake**
+* No external libraries
+* Portable across Windows & Linux
 
 ---
 
-### 🛠️ Technical Deep-Dive
+## 🏗 Architecture
 
-#### **Concurrency & RAII**
+```
+Client Threads
+      │
+      ▼
+┌───────────────────────┐
+│  Shared Hash Map      │
+│  (std::unordered_map) │
+└───────────────────────┘
+      ▲
+      │
+ Reader-Writer Lock
+      │
+      ▼
+ Write-Ahead Log (WAL)
+```
 
-The system uses RAII (Resource Acquisition Is Initialization) to manage thread safety.
+### Concurrency Model
 
-* **Writes:** Handled via `std::unique_lock` for exclusive access.
-* **Reads:** Handled via `std::shared_lock` for concurrent access.
-
-#### **Data Recovery**
-
-The `load_from_wal()` sequence ensures that the database is fault-tolerant:
-
-1. Check for existing `data/volt.log`.
-2. Parse commands and tokens line-by-line.
-3. Inject data into the hash map without re-logging, preventing log recursion.
+| Operation | Lock Type   | Behavior    |
+| --------- | ----------- | ----------- |
+| GET       | shared_lock | Concurrent  |
+| SET       | unique_lock | Exclusive   |
+| WAL Flush | File I/O    | Synchronous |
 
 ---
 
-### 📂 Project Structure
+## 🔄 Crash Recovery Flow
+
+1. Detect `data/volt.log`
+2. Parse commands line-by-line
+3. Inject data directly into memory
+4. Skip logging during recovery phase
+5. Restore complete state
+
+---
+
+## 📂 Project Structure
 
 ```text
 VoltCache/
-├── include/           # Header files (Engine declarations)
-├── src/               # Core Implementation (Server & Engine logic)
-├── Testing/           # Python-based Integration Test Suite
-├── data/              # Persistent WAL storage (ignored by git)
-├── CMakeLists.txt     # Cross-platform build configuration
-└── .gitignore         # Configured to keep build/ and logs out of repo
-
+├── include/           # Engine declarations
+├── src/               # Server & engine implementation
+├── Testing/           # Python integration tests
+├── data/              # WAL persistence layer
+├── CMakeLists.txt
+└── README.md
 ```
 
 ---
 
-### ⚙️ Installation & Build
+## ⚙️ Installation
 
-**Prerequisites:**
+### 🔧 Requirements
 
 * CMake 3.10+
-* MinGW-w64 (UCRT64 recommended) or GCC
+* GCC / MinGW-w64 (UCRT64 recommended)
+* Python 3 (for integration tests)
 
-**Building:**
+### 🏗 Build
 
 ```bash
 mkdir build && cd build
 cmake -G "MinGW Makefiles" ..
 cmake --build .
-
 ```
 
-**Running the Server:**
+### ▶ Run Server
 
 ```bash
-.\VoltCache.exe
-
+./VoltCache
 ```
 
-**Running Tests:**
+### 🧪 Run Integration Tests
 
 ```bash
 python Testing/test_volt.py
-
 ```
 
 ---
 
-### 🗺️ Roadmap (Upcoming Features)
+## 📈 Performance Goals
 
-* [ ] **LRU Eviction Policy:** Implement `std::list` + `std::unordered_map` for O(1) eviction of least recently used keys when memory limits are reached.
-* [ ] **Lock Striping:** Horizontal partitioning (sharding) of the database into 16 discrete buckets to reduce lock contention.
-* [ ] **Google Test Integration:** Unit testing for core engine components to ensure 100% logic coverage.
+* O(1) average lookup (hash map)
+* Minimal lock contention
+* WAL durability with low overhead
+* Safe concurrent client simulation
 
 ---
 
-### 🏆 Why this project?
+## 🗺 Roadmap
 
-This project demonstrates proficiency in **System Design**, **Modern C++ synchronization**, and **File I/O performance**. It is built to simulate real-world constraints found in systems like Redis and Memcached.
+* [ ] LRU Eviction Policy (O(1) eviction via list + hashmap)
+* [ ] Lock Striping (16 bucket sharding)
+* [ ] GoogleTest unit coverage
+* [ ] Benchmark suite (throughput + latency metrics)
+* [ ] Optional async WAL mode
+* [ ] Snapshotting mechanism
+
+---
+
+## 🧠 Design Philosophy
+
+VoltCache is built to demonstrate:
+
+* Advanced C++17 mastery
+* RAII-driven concurrency safety
+* File I/O durability guarantees
+* Real-world system design principles
+
+This is not just a CRUD store — it’s a **mini database engine**.
+
+---
+
+## 🏆 Why VoltCache Stands Out
+
+✔ Fully thread-safe architecture
+
+✔ Persistent durability layer
+
+✔ Clean modular structure
+
+✔ Zero third-party dependencies
+
+Built as a foundational stepping stone toward distributed caching and database engines.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome.
+If you'd like to improve performance, add benchmarking, or implement eviction strategies — open a PR.
 
 ---
