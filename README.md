@@ -1,6 +1,11 @@
 
----
-## ⚡ VoltCache
+# ⚡ VoltCache
+
+<p align="left"> <img src="https://img.shields.io/badge/status-Stable-brightgreen.svg" /> <img src="https://img.shields.io/github/license/arshc0der/VoltCache?color=green" /> <img src="https://img.shields.io/github/stars/arshc0der/VoltCache?style=social" /> <img src="https://img.shields.io/github/forks/arshc0der/VoltCache?style=social" /> <img src="https://img.shields.io/github/issues/arshc0der/VoltCache" /> <img src="https://img.shields.io/github/last-commit/arshc0der/VoltCache" /> <img src="https://img.shields.io/badge/language-C%2B%2B17-00599C?logo=c%2B%2B&logoColor=white" /> <img src="https://img.shields.io/badge/build-CMake-064F8C?logo=cmake&logoColor=white" /> <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey" /> <img src="https://img.shields.io/badge/threading-std::shared__mutex-blue" /> <img src="https://img.shields.io/badge/persistence-Write--Ahead%20Logging-orange" /> <img src="https://img.shields.io/badge/testing-Python%20Integration%20Suite-yellow" /> <img src="https://img.shields.io/badge/dependencies-Zero-success" /> </p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/arshc0der/VoltCache/refs/heads/main/Testing/preview/logo.png" width="100%" alt="VoltCache"/>
+</p>
 
 > **Status:** High-performance in-memory engine with completed Durability (WAL) and Thread-Safe Concurrency layers.
 
