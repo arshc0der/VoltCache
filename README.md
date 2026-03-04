@@ -1,73 +1,98 @@
-# ⚡ VoltCache
 
-> **🚧 Active Development:** Building a high-performance in-memory caching engine from the ground up.
+---
+## ⚡ VoltCache
 
-VoltCache is a lightweight, multithreaded in-memory key-value store built entirely in C++. Inspired by the core architecture of distributed caches like Redis, this project is designed to handle extremely low-latency data access by bypassing disk I/O bottlenecks. 
+> **Status:** High-performance in-memory engine with completed Durability (WAL) and Thread-Safe Concurrency layers.
 
-By managing raw POSIX sockets and implementing custom thread pools, VoltCache ensures high-throughput concurrent client connections. The architecture is intentionally kept minimal and zero-dependency, making it highly optimized for containerized deployments and rigorous performance profiling—including measuring throughput, latency, and hardware-level energy consumption under heavy concurrent loads.
+VoltCache is a lightweight, multithreaded in-memory key-value store built with **C++17**. It is designed to handle low-latency data access while ensuring data integrity through a Write-Ahead Logging system. By utilizing modern C++ synchronization primitives, VoltCache supports high-throughput concurrent client connections.
 
-### 1. Durability: Write-Ahead Logging (WAL)
+---
 
-In-memory data is lost if the power goes out. A real database writes every command to a simple text file (a "log") *before* updating memory.
+### 🚀 Core Features (Implemented)
 
-* **The Task:** Create a `volt.log` file. Every time a `SET` command comes in, append it to the file before updating the `unordered_map`.
-* **The Wow Factor:** Show the recruiter that if you stop and restart the server, it reads the log file and "replays" the commands to restore the data.
+* **Thread-Safe Engine:** Implements a **Reader-Writer Lock pattern** using `std::shared_mutex`. This allows unlimited concurrent reads while ensuring exclusive access for writes, maximizing throughput.
+* **Durability (Write-Ahead Logging):** Every `SET` operation is flushed to `data/volt.log` before memory update. On system restart, the engine automatically replays the log to restore the state.
+* **Structured Data Support:** Advanced tokenization allows for storing complex strings and **JSON** objects (handling spaces and delimiters correctly).
+* **Zero-Dependency Build:** Managed entirely via **CMake**, ensuring the project is portable and easy to compile in any C++ environment.
 
-### 2. Efficiency: LRU Eviction Policy
+---
 
-RAM is expensive. If your cache gets too full, the server will crash. You need an **Eviction Policy** to delete old data automatically.
+### 🛠️ Technical Deep-Dive
 
-* **The Task:** Implement a **Least Recently Used (LRU)** cache.
-* **The Wow Factor:** Use a combination of a `std::list` (to track order) and a `std::unordered_map` (for fast lookup). This is a classic "Senior Engineer" interview question.
+#### **Concurrency & RAII**
 
-### 3. Scalability: Lock Striping (Sharding)
+The system uses RAII (Resource Acquisition Is Initialization) to manage thread safety.
 
-A single `shared_mutex` for the whole database is a "bottleneck." If 1,000 threads try to access different keys, they still have to wait for that one lock.
+* **Writes:** Handled via `std::unique_lock` for exclusive access.
+* **Reads:** Handled via `std::shared_lock` for concurrent access.
 
-* **The Task:** Instead of one map, create an array of 16 maps (buckets). Use a hash of the key to decide which bucket to use.
-* **The Wow Factor:** This is called **Lock Striping**. It allows multiple threads to write to the database at the exact same time as long as they are hitting different buckets.
+#### **Data Recovery**
 
-### 4. Professionalism: Testing & CI/CD
+The `load_from_wal()` sequence ensures that the database is fault-tolerant:
 
-MNCs don't trust code that isn't tested.
+1. Check for existing `data/volt.log`.
+2. Parse commands and tokens line-by-line.
+3. Inject data into the hash map without re-logging, preventing log recursion.
 
-* **The Task:** Integrate **Google Test (GTest)**. Write tests that simulate 100 clients hitting the server at once.
-* **The Wow Factor:** Add a `.github/workflows/main.yml` file so that every time you push code, GitHub automatically compiles and runs your tests.
+---
 
-### Summary Checklist for your Resume:
+### 📂 Project Structure
 
-| Feature | What it proves to an MNC |
-| --- | --- |
-| **RAII & Smart Pointers** | You don't have memory leaks. |
-| **Write-Ahead Log** | You understand data integrity and durability. |
-| **LRU Eviction** | You know how to manage limited hardware resources. |
-| **CMake Build System** | You can manage professional, cross-platform C++ projects. |
-| **Lock Striping** | You can architect for high-concurrency performance. |
-
-By adding even just **one** of these (like the WAL or LRU), you move your project from "beginner" to "advanced."
-
-Which of these sounds most interesting to you to try building first: making the data "survive" a restart (WAL), or making it "auto-delete" old data (LRU)?
-
-
-folder strcture
+```text
 VoltCache/
-├── CMakeLists.txt             # The "Boss" file (Build System)
-├── include/                   # Public API / Header files
-│   └── VoltCache.h            # Engine declarations
-├── src/                       # Implementation files
-│   ├── main.cpp               # Server entry point & Socket logic
-│   └── VoltCache.cpp          # Engine logic (SET/GET/WAL)
-├── build/                     # Compiled binaries (Created by you)
-├── data/                      # Persistent storage (WAL logs)
-└── README.md                  # Project documentation
+├── include/           # Header files (Engine declarations)
+├── src/               # Core Implementation (Server & Engine logic)
+├── Testing/           # Python-based Integration Test Suite
+├── data/              # Persistent WAL storage (ignored by git)
+├── CMakeLists.txt     # Cross-platform build configuration
+└── .gitignore         # Configured to keep build/ and logs out of repo
 
+```
 
+---
 
-# 1. Enter the build folder (if you aren't already there)
-cd build
+### ⚙️ Installation & Build
 
-# 2. Configure (This generates the "MinGW Makefiles")
+**Prerequisites:**
+
+* CMake 3.10+
+* MinGW-w64 (UCRT64 recommended) or GCC
+
+**Building:**
+
+```bash
+mkdir build && cd build
 cmake -G "MinGW Makefiles" ..
-
-# 3. Build (This actually runs the compiler)
 cmake --build .
+
+```
+
+**Running the Server:**
+
+```bash
+.\VoltCache.exe
+
+```
+
+**Running Tests:**
+
+```bash
+python Testing/test_volt.py
+
+```
+
+---
+
+### 🗺️ Roadmap (Upcoming Features)
+
+* [ ] **LRU Eviction Policy:** Implement `std::list` + `std::unordered_map` for O(1) eviction of least recently used keys when memory limits are reached.
+* [ ] **Lock Striping:** Horizontal partitioning (sharding) of the database into 16 discrete buckets to reduce lock contention.
+* [ ] **Google Test Integration:** Unit testing for core engine components to ensure 100% logic coverage.
+
+---
+
+### 🏆 Why this project?
+
+This project demonstrates proficiency in **System Design**, **Modern C++ synchronization**, and **File I/O performance**. It is built to simulate real-world constraints found in systems like Redis and Memcached.
+
+---
