@@ -1,45 +1,52 @@
 #include <iostream>
-#include <unordered_map>
 #include <string>
-using namespace std;
+#include "VoltCache.h"
 
-class voltcache
-{
-private:
-    // This actaul "in-memory database"
-    unordered_map<std::string, std::string> store;
+#ifdef _WIN32
+    #include <winsock2.h>
+    #pragma comment(lib, "ws2_32.lib")
+    typedef int socklen_t;
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <unistd.h>
+    #define INVALID_SOCKET -1
+    #define closesocket close
+    typedef int SOCKET;
+#endif
 
-public:
-    // SET : Stores a key-value pair
-    void set(const string &key, const string &value)
-    {
-        store[key] = value;
-        cout << "ok\n";
-    }
+int main() {
+    #ifdef _WIN32
+    WSADATA wsa; WSAStartup(MAKEWORD(2, 2), &wsa);
+    #endif
 
-    // GET: Retrives a value its key
-    string get(const string &key)
-    {
-        if (store.find(key) != store.end())
-        {
-            return store[key];
+    VoltCache db;
+    SOCKET server = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in addr = {AF_INET, htons(8080), INADDR_ANY};
+    
+    bind(server, (struct sockaddr*)&addr, sizeof(addr));
+    listen(server, 10);
+    std::cout << "⚡ VoltCache Server Online [Port 8080]\n";
+
+    while (true) {
+        SOCKET client = accept(server, nullptr, nullptr);
+        char buf[1024] = {0};
+        int bytes = recv(client, buf, 1024, 0);
+        
+        if (bytes > 0) {
+            auto tokens = db.tokenize(std::string(buf));
+            std::string response = "ERR: Invalid Command\n";
+            
+            if (tokens.size() >= 2) {
+                if (tokens[0] == "GET") response = db.get(tokens[1]) + "\n";
+                else if (tokens[0] == "SET" && tokens.size() >= 3) {
+                    db.set(tokens[1], tokens[2]);
+                    response = "OK\n";
+                }
+            }
+            send(client, response.c_str(), response.length(), 0);
         }
-        return "(nil)";
+        closesocket(client);
     }
-};
-int main()
-{
-    voltcache db;
-
-    cout << "Starting VoltCache (Local Engine Test)\n";
-    cout << "--------------------------------------\n";
-
-    // Simulating storing some data
-    db.set("user:101", "Arsh");
-    db.set("role", "Developer");
-
-    // Retrieving the data
-    cout << "Value for user:101 -> " << db.get("user:101") << "\n";
-    cout << "Value for invalid_user -> " << db.get("user:999") << "\n";
     return 0;
 }

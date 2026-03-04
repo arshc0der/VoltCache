@@ -7,6 +7,17 @@
 *.o
 *.obj
 
+# Ignore the build directory
+build/
+
+# Ignore local data (optional, depends if you want to share your logs)
+data/*.log
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+*.user
+
 # Precompiled Headers
 *.gch
 *.pch
